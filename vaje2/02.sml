@@ -114,4 +114,14 @@ fun isBST (tree : tree) : bool =
         | Node (s, Leaf l, Leaf d) => s>l andalso s<d
         | Node (s, Leaf l, Node d) => s>l andalso s<(#1 d) andalso isBST(Node(#1 d, #2 d, #3 d)) 
         | Node (s, Node l, Leaf d) => s<d andalso s>(#1 l) andalso isBST(Node(#1 l, #2 l, #3 l))
-        | Node (s, Node l, Node d) => s>(#1 l) andalso s<(#1 d) andalso isBST(Node(#1 l, #2 l, #3 l)) andalso isBST(Node(#1 d, #2 d, #3 d))  
+        | Node (s, Node l, Node d) => s>(#1 l) andalso s<(#1 d) andalso isBST(Node(#1 l, #2 l, #3 l)) andalso isBST(Node(#1 d, #2 d, #3 d))
+
+fun min (tree : tree) : int =
+    case tree of 
+        Leaf x => x
+        | Node (s, l, d) => Int.min(s,Int.min(min l, min d))
+
+fun max(tree: tree): int =
+    case tree of
+        Leaf x => x
+        | Node (s, l, d) => Int.max(s,Int.max(max l, max d))
