@@ -41,16 +41,14 @@ fun zip (x::xs, y::ys) = (x,y)::zip(xs,ys)
 
 (* unzip [(1, "a"), (2, "b"), (3, "c")] = ([1, 2, 3], ["a", "b", "c"]); *)
 
-(* fun unzip ((g1,g2)::r) = map (fn ((g1,g2)::r) => ((g1::nil),(g2::nil)), [])
-    | unzip _ = []; *)
+(* fun unzip (l) = if (l = nil) then nil else [map (hd, l), map (hd, tl l)] *)
 
-(* fun unzip ((x1,x2)::xs) =
-    let
-      val (l1,l2) = unzip xs
-    in
-      (x1::l1, x2::l2)
+fun unzip ((g1,g2)::r) = 
+    let val (r1, r2) = unzip r
+    in (g1::r1, g2::r2) 
     end
-    | unzip _ = []; *)
+    | unzip _ = ([], [])
+
 
 datatype natural = Succ of natural | One;
 exception NotNaturalNumber;
@@ -125,13 +123,6 @@ fun avl (f, bst, e) =
                       else avl (f,r,e))
         | lf => br(lf,e,lf)
 
-
-    
-
-
-(* fun rotate ((l,x, r), L) = br (br(l, x, #1 l), #2 r, #3 r)
-    | rotate ((l,x,r), R) = br (#1 l, #2 l, br(#1 r, x, r))
-    | rotate (_,_) = lf *)
 
 (* val zip = fn : 'a list * 'b list -> ('a * 'b) list
 val unzip = fn : ('a * 'b) list -> 'a list * 'b list

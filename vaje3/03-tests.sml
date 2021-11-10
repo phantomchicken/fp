@@ -36,11 +36,11 @@ val test2 = zip ([], [1,2,3]) = [];
 val test3 = zip ([1], [1,2]) = [(1,1)];
 val _ = (all_tests := !all_tests @ [test1, test2, test3]);
 
-(* (val _ = print "---------- unzip ----------\n";
+val _ = print "---------- unzip ----------\n";
 val _ : ('a * 'b) list -> 'a list * 'b list = unzip;
 val test1 = unzip [(1, "a"), (2, "b"), (3, "c")] = ([1, 2, 3], ["a", "b", "c"]);
 val test2 = unzip ([]) = ([], []);
-val _ = (all_tests := !all_tests @ [test1, test2]); *)
+val _ = (all_tests := !all_tests @ [test1, test2]);
 
 val _ = print "---------- subtract ----------\n";
 val _ : natural * natural -> natural = subtract;
