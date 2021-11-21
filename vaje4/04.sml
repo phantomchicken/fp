@@ -30,13 +30,12 @@ fun bestString f s = foldl (fn (x,y) => if f (x,y) then x else y) "" s;
 fun funkcijaLongest (x,y) = if size (x)>= size(y) then x else y;
 fun funkcijaLargest (x,y) = 
       case String.compare(x, y) of
-		LESS => y
-		 | GREATER => x
-		 | _ => x
+		 GREATER => true
+		 | _ => false
 (* fun longestString (s as g1::g2::r) = bestString (test(g1,g2) s); *)
 (* fun longestString (s as x::y::r) = bestString (fn(x,y) => if size (x) >= size(y) then x else y) s;  *)
 (* fun longestString (s as x::y::r) = bestString funkcija(x,y) s;  *)
-fun largestString s = foldl funkcijaLargest "" s;
+fun largestString s = bestString funkcijaLargest s;
 fun longestString s = foldl funkcijaLongest "" s;
 
 (* Seznam uredi naraščajoče z algoritmom quicksort. Prvi argument je funkcija za primerjanje. *)
@@ -149,4 +148,20 @@ fun group l = ListPair.zip (isolate' l , countSame (l, [], 1));
 (* Elemente iz podanega seznama razvrsti v ekvivalenčne razrede. Znotraj razredov naj bodo elementi v istem vrstnem redu kot v podanem seznamu. Ekvivalentnost elementov definira funkcija f, ki za dva elementa vrne true, če sta ekvivalentna. *)
 (* Sorts the elements from a list into equivalence classes. The order of elements inside each equivalence class should be the same as in the original list. The equivalence relation is given with a function f, which returns true, if two elements are equivalent. *)
 (* val equivalenceClasses = fn : ('a -> 'a -> bool) -> 'a list -> 'a list list *)
-fun equivalenceClasses _ _ = [[]];
+(* fun equivalenceClasses f s = 
+   	case s of 
+      [] => []
+      | g::r => (let val a = List.partition (fn x => f g x) s
+                in 
+                end) *)
+
+fun equivalenceClasses f xs =
+	case xs of
+		nil => nil
+		| h::t => let
+				val (pos, neg) = List.partition(fn x => f h x) t
+				val rest = (equivalenceClasses f)(neg)
+			in
+				(h::pos)::rest
+			end
+;
