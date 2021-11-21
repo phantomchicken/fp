@@ -14,7 +14,21 @@ fun readFile filename =
 
 exception NotImplemented;
 
-fun split _ _ = raise NotImplemented;
+fun split _ [] = [] 
+| split blockSize xs =
+    if blockSize > length xs 
+    then split 1 [] 
+    else List.take (xs, blockSize) :: split blockSize (List.drop(xs,blockSize))
+
+(* [List.take (xs, blockSize), List.drop(xs,blockSize)]; 
+   fun split _ [] = [] 
+    | split blockSize xs = let 
+                                val blok = List.take (xs, blockSize); 
+                                val blok2 = List.drop(xs,blockSize);
+                                val split2 = split blockSize blok2;
+                            in 
+                                blok::split2
+                            end;  *)
 
 signature RING =
 sig
@@ -34,7 +48,39 @@ struct
   val one = 1
   fun neg x = ~x mod n
 
-  fun modularInverse (a, n) = raise NotImplemented
+  fun modularInverseBrute (n, a) =
+    let
+    val i = ref n
+    val rez = ref ~1
+    val hm = while (!i > 0) do (
+        i := (!i - 1);
+        if (a * !i mod n = 1) 
+        then 
+            rez := !i 
+        else ()
+    )
+    in
+        !rez
+    end;
+
+  fun modularInverse (a, n) =  if ((modularInverseBrute (n,a)) = ~1) then NONE else SOME (modularInverseBrute (n,a));
+
+
+ (* val test3 = Z96.inv 11 = SOME 35 *)
+ (* a inv n = reš
+ reš * n mod a = 1 *)
+ (* 11 * 35 mod 96 = 1 *)
+  (* fun foo (n, a) =
+    let
+    val counter = ref a
+    in
+    while !i > 0 do (
+        if (n * i mod a) 
+        then i 
+        else
+        i := !i - 1
+    )
+    end; *)
 
   fun inv x = modularInverse (x mod n, n)
   fun op + a =  Int.+ a mod n
@@ -58,21 +104,58 @@ sig
   val inv : t list list -> t list list option
 end;
 
+fun join [] [] = []
+| join xs [] = xs
+| join [] ys = ys
+| join xs ys = let val glava = hd xs @ hd ys; val rep = join (tl xs) (tl ys);
+                   in glava::rep
+                   end;
+
 functor Mat (R : RING) :> MAT where type t = R.t =
 struct
   type t = R.t
   structure Vec =
     struct
       fun dot _ _ = raise NotImplemented
-      fun add _ _ = raise NotImplemented
-      fun sub _ _ = raise NotImplemented
-      fun scale _ _ = raise NotImplemented
+      
+      fun add [] x = x 
+      | add x [] = x
+      | add x y = let 
+                    val (a,b) = hd (ListPair.zip (x,y))
+                  in (R.+(a,b))::add (tl x) (tl y)
+                  end;
+
+      fun sub [] x = x 
+      | sub x [] = x
+      | sub x y = let 
+                    val (a,b) = hd (ListPair.zip (x,y))
+                  in (R.+(a, R.neg b))::sub (tl x) (tl y)
+                  end;
+      
+      fun scale skalar [] = [] 
+      | scale skalar xs = List.map (fn (x) => R.*(x,skalar)) xs   
+
     end
 
   fun tr _ = raise NotImplemented
   fun mul _ _ = raise NotImplemented
   fun id _ = raise NotImplemented
+  
   fun join _ _ = raise NotImplemented
+  (* fun myzip (h::t, h'::t') = [h, h'] :: myzip(t, t')
+     |  myzip (_, _) = [] Stop as soon as either list is exhausted. *)
+  
+ (* - M.join [[1,3,6],[2,4,7],[3,5,8]] [[1,2],[2,7],[3,8]];
+val it = [[1,3,6,1,2],[2,4,7,2,7],[3,5,8,3,8]] : M.t list list *)
+
+  fun join [] [] = []
+| join xs [] = xs
+| join [] ys = ys
+| join xs ys = let val glava = hd xs @ hd ys; val rep = join (tl xs) (tl ys);
+                   in glava::rep
+                   end;
+
+
   fun inv _ = raise NotImplemented
 end;
 
