@@ -139,9 +139,35 @@ struct
 
   fun tr _ = raise NotImplemented
   fun mul _ _ = raise NotImplemented
-  fun id _ = raise NotImplemented
+
   
-  fun join _ _ = raise NotImplemented
+  fun zeroRow 0 = nil
+  | zeroRow n = 0::(zeroRow (n-1))  
+  
+  (* fun zeroMatrix n = List.tabulate(n, fn (x) => zeroRow n);   *)
+  
+  fun replaceZeroAtIndex (i, ix, []) = []
+  | replaceZeroAtIndex (i, ix, x::xs) = (if i = ix then 1 else 0) :: (replaceZeroAtIndex (i+1, ix, xs))   
+  
+  (* - (zeroRow 0)@(replaceZeroAtIndex (1,1,zeroRow 3));;
+  val it = [1,0,0] : int list
+  - (zeroRow 1)@(replaceZeroAtIndex (1,1,zeroRow 2));;
+  val it = [0,1,0] : int list
+  - (zeroRow 2)@(replaceZeroAtIndex (1,1,zeroRow 1));;
+  val it = [0,0,1] : int list *)  
+  
+  fun idHelper (_,0) = [] 
+  | idHelper (i, n) = 
+    let 
+        val prefix = zeroRow i
+        val suffix = replaceZeroAtIndex (1,1,zeroRow n)
+        val row = (prefix) @ (suffix)
+    in
+        (row)::(idHelper(i+1,n-1)) 
+    end;
+
+  fun id n =  idHelper (0,n);
+  
   (* fun myzip (h::t, h'::t') = [h, h'] :: myzip(t, t')
      |  myzip (_, _) = [] Stop as soon as either list is exhausted. *)
   
@@ -149,11 +175,12 @@ struct
 val it = [[1,3,6,1,2],[2,4,7,2,7],[3,5,8,3,8]] : M.t list list *)
 
   fun join [] [] = []
-| join xs [] = xs
-| join [] ys = ys
-| join xs ys = let val glava = hd xs @ hd ys; val rep = join (tl xs) (tl ys);
-                   in glava::rep
-                   end;
+  | join xs [] = xs
+  | join [] ys = ys
+  | join xs ys = let val glava = hd xs @ hd ys; 
+                     val rep = join (tl xs) (tl ys);
+                 in glava::rep
+                 end;
 
 
   fun inv _ = raise NotImplemented
