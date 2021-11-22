@@ -116,7 +116,7 @@ struct
   type t = R.t
   structure Vec =
     struct
-      fun dot _ _ = raise NotImplemented
+      fun dot v1 v2 = foldl (fn (x,y) => R.+(x,y)) R.zero (ListPair.map(fn(x,y)=> R.*(x,y)) (v1,v2));
       
       fun add [] x = x 
       | add x [] = x
@@ -142,12 +142,12 @@ struct
 
   
   fun zeroRow 0 = nil
-  | zeroRow n = 0::(zeroRow (n-1))  
+  | zeroRow n = (R.zero)::(zeroRow (n-1))  
   
   (* fun zeroMatrix n = List.tabulate(n, fn (x) => zeroRow n);   *)
   
   fun replaceZeroAtIndex (i, ix, []) = []
-  | replaceZeroAtIndex (i, ix, x::xs) = (if i = ix then 1 else 0) :: (replaceZeroAtIndex (i+1, ix, xs))   
+  | replaceZeroAtIndex (i, ix, x::xs) = (if i = ix then R.one else R.zero) :: (replaceZeroAtIndex (i+1, ix, xs))   
   
   (* - (zeroRow 0)@(replaceZeroAtIndex (1,1,zeroRow 3));;
   val it = [1,0,0] : int list
