@@ -146,3 +146,142 @@ fun mojamoja a b =
             B x => B x
         | _ => A(3, 3)
 (* val mojamoja = fn : int Tip -> 'a -> int Tip *)
+
+datatype ('a,'b) chain =
+    final
+| Node of {a:'a ref, b:'b} * ('b,'a) chain;
+
+(* fun chain_to_list veriga = 
+        case veriga of
+            final => ([],[])
+        | Node ({a=val_a, b=val_b}, final) => ([!val_a],[b])
+        | Node ({a=val_a, b=val_b}, Node({a=val_b2, b=val_a2} , nova_veriga)) =>
+            let val (sez_a, sez_b) = chain_to_list nova_veriga
+            in (!val_a::val_a2::sez_a, val_b::(!val_b2)::sez_b)
+            end *)
+
+
+(* funktor je funkcija slika strukture v strukturo ki se ujema s podpisom *)
+
+structure Karte =
+struct
+    (* podatkovni tipi za predstavitev igralnih kart in množice kart v rokah *)
+    datatype barva = Pik | Karo | Srce | Kriz
+    datatype karta = Karta of (barva * int) | Joker
+    type karte = string list
+    (* seznam kart, ki jih držimo v rokah, val v_roki : karte ref *)
+    val v_roki = ref []:karte ref
+    (* izjema, ki se proži ob izdelavi primerka neveljavne karte *)
+    exception NeveljavnaKarta of (barva * int)
+    (* funkcija za izdelavo primerka nove karte, val nova_karta : barva * int -> karta *)
+    fun nova_karta (barva, int) =
+            if (int>=2 andalso int <=14) then Karta(barva,int) else raise NeveljavnaKarta(barva,int)
+    (* funkcija za dodajanje nove karte v roke, val dodaj_v_roke : karta -> karte *)
+    fun dodaj_v_roke (nova:karta) =
+            let val count_jokers = List.foldl (fn (el,ac)=>if (el="Joker") then ac+1 else ac) 0 (!v_roki)
+            in
+                (case nova of
+                        Joker => if (count_jokers <4) then v_roki := (!v_roki) @ ["Joker"] else ()
+                    | _ => v_roki := (!v_roki) @ ["Karta"]
+                    ; (!v_roki))
+            end
+    (* prikaže karte, ki jih imamo v rokah, val pokazi_roke : unit -> karte *)
+    fun pokazi_roke () = (!v_roki)
+end
+
+(* karte onzaci s karta, jokerje z joker *)
+(* 1) vpogled v svoje karte v roki
+dostop do v_roki ali pokazi_roke
+raje pokazi_roke kot v_roki, ker onemogočima dostop 
+
+fun pokazi_roke () = (!v_roki) unit --> karte
+type karte = string list
+
+v podpisu type, za posamezne val
+lahko type karte pa pokazi_roke:unit -> karte - skrijemo tip karte
+ali pokazi_roke: unit -> string list - krajsi podpis
+
+2) lahko doda novo karto
+rabimo karta, potem rabimo barvo, rabimo Jokerja
+
+3) ne damo exception zaradi krajsega podpisa
+*)
+
+signature KartePodpis =
+sig
+    type karta
+    datatype barva = Pik | Kriz | Srce | Karo
+    val Joker: karta
+    val Karta: (barva*int) -> karta
+    (* type karte = string list *)
+    (* val neveljavnaKarta: (barva * int) exception *)
+    val pokazi_roke: unit -> string list (* karte *)
+    val dodaj_v_roke: karta -> string list (* karte *)
+    val nova_karta: barva * int -> karta
+end
+
+(* Karte.dodaj_v_roke (Karte.nova_karta(Karte.Pik,10)
+   Karte.dodaj_v_roke (Karte.Joker))
+   Karte.dodaj_v_roke (Karte.nova_karta(Karte.Pik,15)
+   Karte.Karta(Karte.Pik,10) 
+   Karte.pokazi_roke () *)
+
+(*4. naloga posplosi
+kje se ujemajo, imajo case stavek vzamejo seznam, primerjajo če je prazen,
+če ne vzamejo glavo in rep, razlike so tisto kar vrnemo
+*)
+fun first_op sez =
+        case sez of
+            nil => [true]
+        | g::r => (not g)::(second_op r)
+and second_op sez =
+        case sez of
+            nil => [false]
+        | g::r => (g)::(third_op r)
+and third_op sez =
+        case sez of
+            nil => nil
+        | g::r => true::(first_op r)
+
+fun op123 a fun1 fun2 sez=
+    case sez of 
+        nil => a      (* funkcija vrne konstanto a, a je drugi parameter*)
+        | g::r => (fun1 g) :: (fun2 r)(*vzamejo glavo in na repu klicejo funkcijo, funkcija bo parameter f*)
+
+(*implementiraj first_op*)
+val first_op = op123 [true] (fn x => not x) second_op (* lahko tudi not, prva funkcija, ki dela z glavo, druga funkcija, ki dela z repom*)
+val second_op = op123 [false] (fn x => x) third_op
+val third_op = op123 nil (fn x => true) first_op (*ne more samo true, true ni funkcija*)
+
+fun first_op (sez) = op123 [true] (fn x => not x) second_op sez (* lahko tudi not, prva funkcija, ki dela z glavo, druga funkcija, ki dela z repom*)
+and second_op (sez) = op123 [false] (fn x => x) third_op sez
+and third_op (sez) = op123 nil (fn x => true) first_op sez
+
+
+(* *)
+(* fun f1 c l1 l2 = if c then SOME (l1,l2) else NONE
+fun f2 c l1 = if c then l1 else 0
+fun f3 c l1 = if not c then SOME l1 else NONE
+
+(* fun general = if ... then ... else  *)
+(* fun general c l1 l2 = if ... then ... else   *)
+(* fun general c l1 l2 = if fun1 c then ... else   c,c in not c->fun1*)
+fun general fun1 fun2 a c l1 l2 = if fun1 c then fun2 l else a (* NONE, 0, NONE -> a*)
+
+fun general = *)
+
+(* 4) filter z foldl/foldr brez @
+    foldl f acc list
+    foldr f acc list
+    map gre po vrsti in slika
+    filter: funkcija ki filtrira in seznam na katerem izvajamo
+    v accumulatorju hrani seznam, moramo limati na zacetek ker ne smemo @
+    lazje List.foldr
+
+    a je element ok za filter f na elementu
+    (f x) true -> x::acc
+    (f x) false -> acc 
+*)
+
+fun filter f sez = 
+    List.foldr (fn (x,acc) => if (f x) then x::acc else acc) [] sez
