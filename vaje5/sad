@@ -1,0 +1,88 @@
+(*moduli so skupki kode
+lahko dodamo podpis za uporabnika*)
+
+signature MATH :> MATH =
+sig
+    type t
+    structure X: TEST (* lahko prepisemo *)
+    val toInt:t -> int
+    val e = 2.72
+    val pi: real
+    val block: int -> int
+end;
+
+
+signature MATH :> MATH =
+struct
+    open MATH
+    local open list
+    in
+        val fold = foldl
+    end
+end;
+
+structure Complex :> COMPLEX =
+struct
+    type complex = Real.real * Real.real
+
+    fun complex a b = (a, b)
+
+    val i : complex = (0.0, 0.1)
+    fun re ((a, b) : complex) = a
+    fun im ((a, b) : complex) = b
+
+    fun neg ((a, b) : complex) = let open Real in (~ a, ~ b) end
+    fun inv ((a, b) : complex) = let open Real val s = a * a + b * b in (a / s, ~ b / s) end
+
+    fun conj ((a, b) : complex) = (a, Real.~ b)
+
+    fun op* ((a1, b1) : complex, (a2, b2) : complex) = let open Real in (a1 * a2 - b1 * b2, a1 * b2 + a2 * b1) end
+    fun op+ ((a1, b1) : complex, (a2, b2) : complex) = let open Real in (a1 + b1, a2 + b2) end
+
+    fun toString ((a, b) : complex) = Real.toString a ^ " + " ^ Real.toString b ^ "i"
+end;
+
+
+(*local skrivamo nekaj iz globalnega okolja
+
+Set - hrani Object
+Set<Integer> = new Set <Integer>()
+functor je podoben - vzame struktoro in vraca strukturo
+*)
+
+signature KEY =
+sig
+    type key
+    val sameKey : key -> key -> bool
+end;
+
+signature SET =
+sig
+    structure Key : KEY
+    type item
+    type set
+    val mkEmpty : unit -> set
+    val toList : set -> item list
+    val add : set -> item -> unit
+    val subtract : set -> item -> unit
+    val member : set -> item -> bool
+    val isEmpty : set -> bool
+    val fold : (item * 'b -> 'b) -> 'b -> set -> 'b
+end;
+
+
+functor ListSetFn (K : KEY) : SET where type item = K.key = (* nujno *)
+struct
+    structure Key = K
+    type item = K.key
+    type set = item list ref
+    fun mkEmpty () : set = ref []
+    fun toList s = !s
+    fun member s e = List.exists (K.sameKey e) (!s)
+    fun add s e = if member s e then () else (s := e :: !s)
+    fun subtract s e = s := (List.filter (not o K.sameKey e) (!s))
+    fun isEmpty s = null (!s)
+    fun fold f z s = List.foldl f z (!s)
+end;
+
+structure ListSetSet = ListSetFn (type key = int fun sameKey x y = x = y)

@@ -183,6 +183,26 @@ val it = [[1,3,6,1,2],[2,4,7,2,7],[3,5,8,3,8]] : M.t list list *)
                  end;
 
 
+  fun reduce v m = 
+    map (fn x :: xs =>(Vec.sub xs o Vec.scale x) v ) m
+  
+  fun pivot ((v as x::xs) :: m) =  (*vraca matriko iste velikosti pri cemer zgornji kot mora biti 1*)
+    (case R.inv x of 
+      SOME x' => SOME (Vec.scale x' v :: m) (*element je obrnljiv, s x-om skaliramo v in damo na zacetek*)
+      | NONE => case pivot m of (*ce smo dobili obrnljiv elemeeent*)
+                  SOME (v' :: m') => SOME (v' :: v :: m') (*uspelo nam je pivotirati ostali del, v ne smemo izgubiti, vtaknemo nekje*)
+                  | _ => NONE)
+      | pivot _ = NONE
+  
+  (*
+  fun gauss (above, []) = above
+    | gauss (above, curr) =
+      case pivot curr of
+        SOME ((_::v)::m) => gauss (reduce v above @ [v], reduce v m) (*reducitamo above z v-jem*)
+        (*ostali casei*)
+        | _ => SOME pivot *)
+
+
   fun inv _ = raise NotImplemented
 end;
 
