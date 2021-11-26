@@ -422,6 +422,13 @@ fun fun2 sez =
         (g1,g2)::r => (g2,g1)::(fun2 r) 
         | _ => []
 
+fun splosna f funkcija sez =
+    case sez of
+        g::r => f (g,r, funkcija)
+        | _ => []
+
+(* fun f1' sez = splosna (fn(g1,r,f) => case r of g2:: rep => g2::g1::(f rep) | _ => []) f1' sez; *)
+(* fun f2' sez = splosna (fn(g,r,f) => case g of (g1,g2) => (g2,g1) :: (f (tl sez)) | _ => []) f2' sez *)
 (* fun splosna sez fun1= 
     if null sez then [] else
     let
@@ -535,3 +542,32 @@ fun obdelaj (x,y) = (not x, if y mod 2 = 0 then y-1 else y+1)
 end
 (* uporabnik ne more uporabljati funkcije "obdelaj", ker uporablja samo abstraktni podatkovni tip vrednost *)
 (***********************************************************************************************************)
+
+datatype prvi = X of int | Y of prvi | Z of drugi
+ and drugi = W of prvi | tretji
+datatype rezultat = P | D
+
+fun preveri_prvi el = 
+    (* case el of
+        p as prvi =>  case p of pp as prvi => P | pd as drugi => D
+        | d as drugi => case d of dp as drugi => P | dd as drugi => D
+        | [] => P *)
+    case el of
+        Z z => preveri_drugi z
+        | Y y => preveri_prvi y
+        | _ => P
+and preveri_drugi el =
+    case el of
+        W p => preveri_prvi p
+        | tretji => D
+
+(*2. NALOGA 2018*)
+(*izloci([1,4,6,7])
+val it = [(1,[4,6,7]),(4,[1,6,7]),(6,[1,4,7]),(7,[1,4,6])]
+*)
+
+fun izloci sez =
+    case sez of
+        [] => []
+        | x::xs => (x,xs):: List.map (fn(el,sez)=>(el,x::sez)) (izloci xs);
+

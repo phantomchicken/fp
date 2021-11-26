@@ -186,11 +186,11 @@ val it = [[1,3,6,1,2],[2,4,7,2,7],[3,5,8,3,8]] : M.t list list *)
   fun reduce v m = 
     map (fn x :: xs =>(Vec.sub xs o Vec.scale x) v ) m
   
-  fun pivot ((v as x::xs) :: m) =  (*vraca matriko iste velikosti pri cemer zgornji kot mora biti 1*)
+  fun pivot ((v as x::xs) :: m) = 
     (case R.inv x of 
-      SOME x' => SOME (Vec.scale x' v :: m) (*element je obrnljiv, s x-om skaliramo v in damo na zacetek*)
-      | NONE => case pivot m of (*ce smo dobili obrnljiv elemeeent*)
-                  SOME (v' :: m') => SOME (v' :: v :: m') (*uspelo nam je pivotirati ostali del, v ne smemo izgubiti, vtaknemo nekje*)
+      SOME x' => SOME (Vec.scale x' v :: m) 
+      | NONE => case pivot m of 
+                  SOME (v' :: m') => SOME (v' :: v :: m')
                   | _ => NONE)
       | pivot _ = NONE
   
@@ -289,6 +289,14 @@ local
 
   val dictionary = List.foldl (fn (w, d) => Trie.insert w d) Trie.empty (List.map String.explode (parseWords "hamlet.txt")) handle NotImplemented => Trie.empty
 in
+  (* - C.encrypt [[1,0,0],[0,3,0],[0,0,1]] [1,2,3,4,5,6,7,8];
+  val it = [1,6,3,4,5,6] : C.t list
+  K:l x l matrika
+  x: text
+  r: razkosaj x po l [1,2,3],[4,5,6],[7,8] = [1,2,3],[4,5,6]
+  mnozenje matrik  r * k = [[1,6,3],[4,15,6]]
+
+  *)
   fun encrypt key plaintext = raise NotImplemented
   fun decrypt key ciphertext = raise NotImplemented
   fun knownPlaintextAttack keyLenght plaintext ciphertext = raise NotImplemented
