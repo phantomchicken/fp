@@ -267,7 +267,7 @@ struct
 
   val empty = [] : ''a dict
 
-  fun insert w dict = raise NotImplemented
+  fun insert w dict = raise NotImplemented;
     (* let
       fun insertHelper w dict tree = 
       case (w,dict) of 
@@ -276,8 +276,19 @@ struct
         | ([],_) => tree  
     in insertHelper w dict empty
     end *)
+
+
+    (*val dict = [N (#"A",true, [N (#"n",false, [N (#"a",true, [N (#"m",false, [N (#"a",false, [N (#"r",false,[N (#"i",false,[N (#"a",true,[])])])])])])])
+                            , N (#"l",false, [N (#"i",false,[N (#"c",false,[N (#"e",true,[])])])
+                            , N (#"a",false,[N (#"n",true,[])])])])]*)
     
-  fun lookup w dict = raise NotImplemented
+  fun lookup w dict =
+    case (w,dict) of 
+        (w::[], N(crka, jeKonec, rep)::rep2) => if w = crka andalso jeKonec then true else false
+        | (w::ws, N(crka, jeKonec, rep)::rep2) => if w = crka then lookup ws rep orelse lookup ws rep2 else lookup (w::ws) rep2
+        | (w::ws, []) => false
+        | ([], _) => false
+
 end;
 
 signature HILLCIPHER =

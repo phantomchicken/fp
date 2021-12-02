@@ -17,14 +17,39 @@ struct
   (* fun insert [] d = d
   | insert (g::r) d =  d @ [N (g,true,insert t dict)];  *)
 
-  fun findPlace (x::xs) (y::ys) = if x=y then findPlace xs ys else ys
+  val dict = [N (#"A",true, [N (#"n",false, [N (#"a",true, [N (#"m",false, [N (#"a",false, [N (#"r",false,[N (#"i",false,[N (#"a",true,[])])])])])])])
+                            , N (#"l",false, [N (#"i",false,[N (#"c",false,[N (#"e",true,[])])])
+                            , N (#"a",false,[N (#"n",true,[])])])])];
+
+  fun lookup w dict =
+    case (w,dict) of 
+        (w::[], N(crka, jeKonec, rep)::rep2) => if w = crka andalso jeKonec then true else false
+        | (w::ws, N(crka, jeKonec, rep)::rep2) => if w = crka then lookup ws rep orelse lookup ws rep2 else lookup (w::ws) rep2
+        | (w::ws, []) => false
+        | ([], _) => false
+
+  
+  fun makeDict w = 
+    case w of 
+        [w] => [N(w, true, [])]
+        | w::ws => [N(w, false, makeDict ws)]
+        
+
+  fun insert w dict = 
+    case (w,dict) of 
+          (w::ws, N(crka, jeKonec, rep)::rep2) => if w = crka then dict @ (insert ws rep) else dict @ (insert (w::ws) rep2)
+          | (w::ws, []) => makeDict (w::ws)
+          | ([], N(crka, jeKonec, rep)::rep2) => N(crka, true, rep)::rep2
+
+  
+  (* fun findPlace (x,  N(y,jeZe,r)) = if x=y then y else findPlace (x, r)
   fun insertHelper [] dict = [N(#"z",false,[])]
         | insertHelper (g::nil) dict = [N(g,true,[])]
-        | insertHelper (g::r) dict = dict @ [N(g,false,insertHelper r dict)]
+        | insertHelper (g::r) dict = dict @ [N(g,false,insertHelper r dict)]; *)
 
-  fun insert' (x::xs) (y::ys) = [N(x,false,insert' xs ys)] (*if x=y then insertHelper (xs) (ys) else*)
-  | insert' (x::xs) empty = [N(x,false,insert' xs [x])]
-  |  insert' [] ys = empty 
+  (* fun insert' (x::xs) (y::ys) = N(x,false,insert' xs ys) (*if x=y then insertHelper (xs) (ys) else*)
+  | insert' (x::xs) empty = N(x,false,insert' xs [x])
+  |  insert' [] ys = ys  *)
 (* https://stackoverflow.com/questions/56228958/inserting-values-in-a-trie *)
   (* >Anamaria
   A n a m a r i a(t)
@@ -42,8 +67,6 @@ struct
     l i c e (t)
       a n (t) *)
 
-  (*foldl (fn(el,acc) => el::acc) empty w*)
-
   (* fun insert w dict =
     if dict = empty then (insertHelper w dict)
     else insertHelper' w dict *)
@@ -59,7 +82,6 @@ val it = [N ("a",true,[])] : string Trie.tree list*)
   
 
     
-  fun lookup word dict = raise NotImplemented;
 end
 
 (* - Trie.insert;
