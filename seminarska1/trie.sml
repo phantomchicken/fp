@@ -22,15 +22,15 @@ struct
         | insertHelper (g::nil) dict = dict @ [N(g,true,insertHelper [] dict)]
         | insertHelper (g::r) dict = dict @ [N(g,false,insertHelper r dict)]
   
-  
+  fun insertHelper' [] dict = []
+  | insertHelper' (x::xs) (y::ys) = ys  
+
+
   (*foldl (fn(el,acc) => el::acc) empty w*)
 
   fun insert w dict =
     if dict = empty then (insertHelper w dict)
-    else (case dict of
-        empty => []
-        | [] => [] 
-        | (g::r) => dict)
+    else insertHelper' w dict
 
     
     
