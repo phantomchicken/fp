@@ -268,14 +268,14 @@ struct
   val empty = [] : ''a dict
 
   fun insert w dict = raise NotImplemented
-    let
+    (* let
       fun insertHelper w dict tree = 
       case (w,dict) of 
         (g::r, N (char, jeKonecNiza, t)) => insertHelper (tl w) t tree  
         | (g::r,_) => insertHelper (tl w) dict tree @ [g]
         | ([],_) => tree  
     in insertHelper w dict empty
-    end
+    end *)
     
   fun lookup w dict = raise NotImplemented
 end;

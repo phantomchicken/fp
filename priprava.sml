@@ -380,7 +380,7 @@ fun prestejEco zap =
         fun pomozna zap acc = 
             case zap of 
                 Konec => acc
-                | p as Predmet((_,_),naslednji)  => pomozna naslednji acc+1
+                | Predmet((_,_),naslednji)  => pomozna naslednji acc+1
     in pomozna zap 0
     end
 
@@ -571,3 +571,22 @@ fun izloci sez =
         [] => []
         | x::xs => (x,xs):: List.map (fn(el,sez)=>(el,x::sez)) (izloci xs);
 
+datatype vrtnarstvo = Obrezi of {ime:string, cas:int}
+| Zalij of {ime:string, kolicina: int}
+| Obcuduj of {ime:string, cas:int}
+| Meditiraj of {cas: int}
+| Vonjaj of {ime:string}
+
+(* fun evalvirajVrt dejavnosti =
+    let 
+        fun pomozna dejavnosti cas kolicina =
+            case dejavnosti of
+                [] => {cas=cas, kolicina=kolicina}
+                | (g::r) => (case g of 
+                                Obrezi {ime=_,cas=cas_vr}  => pomozna (r cas+cas_vr kolicina)
+                                | Zalij {ime=_,kolicina=kolicina_vr}=> pomozna (r cas kolicina+kolicina_vr)
+                                | Obcuduj {ime=_,cas=cas_vr}=> pomozna (r cas+cas_vr kolicina)
+                                | Meditiraj {cas=cas_vr}=> pomozna (r cas+cas_vr kolicina)
+                                | _ => pomozna (r cas kolicina))
+    in pomozna (dejavnosti 0 0)
+    end *)
