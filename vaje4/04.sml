@@ -82,7 +82,6 @@ fun transpose [] = [] |
    transpose [[],[],[]] = nil |
    transpose s = [getHeads s] @ transpose (removeHeads s)
 
-(* fun transposeWrap =  *)
 
 (* fun transpose [[]] = [[]] |
    transpose [[x]] = [[x]] |
@@ -98,7 +97,15 @@ fun transpose [] = [] |
 (* Zmnoži dve matriki. Uporabite dot in transpose. *)
 (* Multiplies two matrices. Use dot and transpose. *)
 (* val multiply = fn : int list list -> int list list -> int list list *)
-fun multiply m1 m2 = m1;
+
+fun transpose (matrix: int list list):int list list =
+    List.tabulate (List.length (List.nth (matrix, 0)), fn i => List.map (fn j => List.nth (j, i)) matrix);
+
+fun multiply (matrix1: int list list) (matrix2: int list list): int list list =
+case matrix1 of 
+    [] => []
+    |    x::xr => [List.map (fn y => dot x y) (transpose matrix2)] @ (multiply xr matrix2);
+
 
 (* fun multiplyHelper m1 m2t = 
    case m1 of 

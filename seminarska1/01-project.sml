@@ -137,8 +137,15 @@ struct
 
     end
 
-  fun tr _ = raise NotImplemented
-  fun mul _ _ = raise NotImplemented
+  fun tr (matrix) =
+    List.tabulate (List.length (List.nth (matrix, 0)), fn i => List.map (fn j => List.nth (j, i)) matrix);
+
+  fun dot v1 v2 = foldl (fn (x,y) => R.+(x,y)) R.zero (ListPair.map(fn(x,y)=> R.*(x,y)) (v1,v2));
+
+  fun mul matrix1 matrix2 =
+  case matrix1 of 
+      [] => []
+      |    x::xr => [List.map (fn y => dot x y) (tr matrix2)] @ (mul xr matrix2);  
 
   
   fun zeroRow 0 = nil
@@ -167,12 +174,6 @@ struct
     end;
 
   fun id n =  idHelper (0,n);
-  
-  (* fun myzip (h::t, h'::t') = [h, h'] :: myzip(t, t')
-     |  myzip (_, _) = [] Stop as soon as either list is exhausted. *)
-  
- (* - M.join [[1,3,6],[2,4,7],[3,5,8]] [[1,2],[2,7],[3,8]];
-val it = [[1,3,6,1,2],[2,4,7,2,7],[3,5,8,3,8]] : M.t list list *)
 
   fun join [] [] = []
   | join xs [] = xs
@@ -182,6 +183,13 @@ val it = [[1,3,6,1,2],[2,4,7,2,7],[3,5,8,3,8]] : M.t list list *)
                  in glava::rep
                  end;
 
+
+  fun appendIdentityToMatrix m =
+    let 
+      val n = List.length m
+      val idN = id n
+    in idN
+    end
 
   fun reduce v m = 
     map (fn x :: xs =>(Vec.sub xs o Vec.scale x) v ) m
@@ -194,12 +202,11 @@ val it = [[1,3,6,1,2],[2,4,7,2,7],[3,5,8,3,8]] : M.t list list *)
                   | _ => NONE)
       | pivot _ = NONE
   
-  (*
   fun gauss (above, []) = above
     | gauss (above, curr) =
       case pivot curr of
         SOME ((_::v)::m) => gauss (reduce v above @ [v], reduce v m) (*reducitamo above z v-jem*)
-        (*ostali casei*)
+        (* | NONE => NONE pivot
         | _ => SOME pivot *)
 
 
@@ -215,13 +222,32 @@ sig
   val knownPlaintextAttack : int -> t list -> t list -> t list list option
 end;
 
+fun matrixToList m = foldr (fn(x,acc)=> x @ acc) [] m
+   
 functor HillCipherAnalyzer (M : MAT) :> CIPHER
   where type t = M.t
 =
 struct
   type t = M.t
   
-  fun encrypt key plaintext = raise NotImplemented
+  (* - C.encrypt [[1,0,0],[0,3,0],[0,0,1]] [1,2,3,4,5,6,7,8];
+  val it = [1,6,3,4,5,6] : C.t list
+  K:l x l matrika
+  x: text
+  r: razkosaj x po l [1,2,3],[4,5,6],[7,8] = [1,2,3],[4,5,6]
+  mnozenje matrik  r * k = [[1,6,3],[4,15,6]] *)
+
+  fun matrixToList m = 
+    case m of g::r => g @ matrixToList r
+    | _ => []
+
+  fun encrypt key plaintext =
+    let
+      val l = List.length key
+      val r = split l plaintext
+    in matrixToList(M.mul r key)
+    end
+
   fun decrypt key ciphertext = raise NotImplemented
   fun knownPlaintextAttack keyLenght plaintext ciphertext = raise NotImplemented
 end;
@@ -242,6 +268,15 @@ struct
   val empty = [] : ''a dict
 
   fun insert w dict = raise NotImplemented
+    let
+      fun insertHelper w dict tree = 
+      case (w,dict) of 
+        (g::r, N (char, jeKonecNiza, t)) => insertHelper (tl w) t tree  
+        | (g::r,_) => insertHelper (tl w) dict tree @ [g]
+        | ([],_) => tree  
+    in insertHelper w dict empty
+    end
+    
   fun lookup w dict = raise NotImplemented
 end;
 
@@ -289,14 +324,7 @@ local
 
   val dictionary = List.foldl (fn (w, d) => Trie.insert w d) Trie.empty (List.map String.explode (parseWords "hamlet.txt")) handle NotImplemented => Trie.empty
 in
-  (* - C.encrypt [[1,0,0],[0,3,0],[0,0,1]] [1,2,3,4,5,6,7,8];
-  val it = [1,6,3,4,5,6] : C.t list
-  K:l x l matrika
-  x: text
-  r: razkosaj x po l [1,2,3],[4,5,6],[7,8] = [1,2,3],[4,5,6]
-  mnozenje matrik  r * k = [[1,6,3],[4,15,6]]
 
-  *)
   fun encrypt key plaintext = raise NotImplemented
   fun decrypt key ciphertext = raise NotImplemented
   fun knownPlaintextAttack keyLenght plaintext ciphertext = raise NotImplemented
