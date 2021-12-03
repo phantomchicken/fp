@@ -183,7 +183,7 @@ struct
     in idN
     end
 
-  fun reduce v m = 
+  (* fun reduce v m = 
     map (fn x :: xs =>(Vec.sub xs o Vec.scale x) v ) m
   
   fun pivot ((v as x::xs) :: m) = 
@@ -199,10 +199,22 @@ struct
       case pivot curr of
         SOME ((_::v)::m) => gauss (reduce v above @ [v], reduce v m) (*reducitamo above z v-jem*)
         (* | NONE => NONE pivot
-        | _ => SOME pivot *)
+        | _ => SOME pivot *) *)
 
+(*val det = R.+ ((R.*(a,d), R.neg(R.*(b,c))) *)
 
-  fun inv _ = raise NotImplemented
+  
+  fun inv m = 
+    case List.length m of
+      1 => if isSome (R.inv (hd(hd m))) then SOME [[valOf(R.inv (hd(hd m)))]] else NONE
+      | 2 => (case m of 
+              [[a,b],[c,d]] => (let 
+                                  val det = R.+ ((R.*(a,d), R.neg(R.*(b,c))))
+                                  val detInv = R.inv(det) 
+                                in (if isSome(detInv) then SOME [[R.*(valOf(detInv),d),R.*(valOf(detInv),R.neg(b))],[R.*(valOf(detInv),R.neg(c)),R.*(valOf(detInv),a)]] else NONE)  
+                                end) 
+              | _ => NONE)
+      | _ => NONE 
 end;
 
 
