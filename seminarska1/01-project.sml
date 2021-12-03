@@ -253,13 +253,13 @@ struct
 end;
 
 
-structure Trie :> 
+structure Trie (*:> 
 sig
 eqtype ''a dict
 val empty : ''a dict
 val insert : ''a list -> ''a dict -> ''a dict
 val lookup : ''a list -> ''a dict -> bool
-end
+end*)
 =
 struct
   datatype ''a tree = N of ''a * bool * ''a tree list
@@ -267,22 +267,18 @@ struct
 
   val empty = [] : ''a dict
 
-  fun insert w dict = raise NotImplemented;
-    (* let
-      fun insertHelper w dict tree = 
-      case (w,dict) of 
-        (g::r, N (char, jeKonecNiza, t)) => insertHelper (tl w) t tree  
-        | (g::r,_) => insertHelper (tl w) dict tree @ [g]
-        | ([],_) => tree  
-    in insertHelper w dict empty
-    end *)
+ fun makeDict w = 
+    case w of 
+        [w] => [N(w, true, [])]
+        | w::ws => [N(w, false, makeDict ws)]       
 
+    fun insert word dict = 
+    case (word,dict) of 
+          ([w], N(crka, jeKonec, rep)::rep2) => if w=crka then N(crka, true, rep)::rep2 else N(crka, false, rep)::rep2
+          | (w::ws, []) => makeDict (w::ws)
+          | (w::ws, N(crka, jeKonec, rep)::rep2) => if w = crka then [N(crka, jeKonec, (insert ws rep))] @ rep2 else [N(crka, jeKonec, rep)] @ (insert word rep2)
 
-    (*val dict = [N (#"A",true, [N (#"n",false, [N (#"a",true, [N (#"m",false, [N (#"a",false, [N (#"r",false,[N (#"i",false,[N (#"a",true,[])])])])])])])
-                            , N (#"l",false, [N (#"i",false,[N (#"c",false,[N (#"e",true,[])])])
-                            , N (#"a",false,[N (#"n",true,[])])])])]*)
-    
-  fun lookup w dict =
+    fun lookup w dict =
     case (w,dict) of 
         (w::[], N(crka, jeKonec, rep)::rep2) => if w = crka andalso jeKonec then true else false
         | (w::ws, N(crka, jeKonec, rep)::rep2) => if w = crka then lookup ws rep orelse lookup ws rep2 else lookup (w::ws) rep2
