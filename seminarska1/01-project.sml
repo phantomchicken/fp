@@ -1,5 +1,5 @@
-val _ = Control.Print.printDepth := 10;
-val _ = Control.Print.printLength := 10;
+val _ = Control.Print.printDepth := 100;
+val _ = Control.Print.printLength := 100;
 val _ = Control.Print.stringDepth := 2000;
 val _ = Control.polyEqWarn := false;
 
@@ -303,6 +303,15 @@ sig
   val ciphertextOnlyAttack : int -> string -> Cipher.t list list option
 end
 
+val alphabet =
+  [#" ",#"a",#"b",#"c",#"d",#"e",#"f",#"g",#"h",#"i",#"j",#"k",#"l",#"m",#"n",
+   #"o",#"p",#"q",#"r",#"s",#"t",#"u",#"v",#"w",#"x",#"y",#"z"]
+
+fun najdiIxCrke (alphabet, crka, i) =
+  case alphabet of
+    [] => ~1
+    | x::xs => if x=crka then i else najdiIxCrke (xs, crka, i+1)
+
 functor HillCipher (val alphabet : string) :> HILLCIPHER =
 struct
 
@@ -314,8 +323,32 @@ structure Ring = Ring (val n = alphabetSize)
 structure Matrix = Mat (Ring)
 structure Cipher = HillCipherAnalyzer (Matrix)
 
-fun encode txt = raise NotImplemented
-fun decode code = raise NotImplemented
+fun najdiIxCrke (alphabet, crka, i) =
+  case alphabet of
+    [] => ~1
+    | x::xs => if x=crka then i else najdiIxCrke (xs, crka, i+1)
+
+fun encode txt =
+  let 
+    val txtChar = String.explode (txt) 
+  in 
+    case txtChar of 
+      [] => []
+      | x::xs => if ((najdiIxCrke (alphabet,x,0)) = ~1) 
+                 then raise NotImplemented 
+                 else [(najdiIxCrke (alphabet,x,0))] @ (encode (String.implode(xs)))
+  end
+
+fun decode code = 
+  let 
+    fun decodeHelper code = 
+      case code of 
+        [] => []
+        | x::xs => if (List.length(alphabet)<x) 
+                  then raise NotImplemented 
+                  else [List.nth(alphabet,x)] @ (decodeHelper xs)
+  in String.implode(decodeHelper (code))
+  end 
 
 local
   fun parseWords filename =
