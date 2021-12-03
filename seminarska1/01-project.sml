@@ -1,5 +1,5 @@
-val _ = Control.Print.printDepth := 100;
-val _ = Control.Print.printLength := 100;
+val _ = Control.Print.printDepth := 10;
+val _ = Control.Print.printLength := 10;
 val _ = Control.Print.stringDepth := 2000;
 val _ = Control.polyEqWarn := false;
 
@@ -19,16 +19,6 @@ fun split _ [] = []
     if blockSize > length xs 
     then split 1 [] 
     else List.take (xs, blockSize) :: split blockSize (List.drop(xs,blockSize))
-
-(* [List.take (xs, blockSize), List.drop(xs,blockSize)]; 
-   fun split _ [] = [] 
-    | split blockSize xs = let 
-                                val blok = List.take (xs, blockSize); 
-                                val blok2 = List.drop(xs,blockSize);
-                                val split2 = split blockSize blok2;
-                            in 
-                                blok::split2
-                            end;  *)
 
 signature RING =
 sig
@@ -52,7 +42,7 @@ struct
     let
     val i = ref n
     val rez = ref ~1
-    val hm = while (!i > 0) do (
+    val _ = while (!i > 0) do (
         i := (!i - 1);
         if (a * !i mod n = 1) 
         then 
@@ -63,7 +53,9 @@ struct
         !rez
     end;
 
-  fun modularInverse (a, n) =  if ((modularInverseBrute (n,a)) = ~1) then NONE else SOME (modularInverseBrute (n,a));
+  fun modularInverse (a, n) =  if ((modularInverseBrute (n,a)) = ~1) 
+                               then NONE 
+                               else SOME (modularInverseBrute (n,a));
 
 
  (* val test3 = Z96.inv 11 = SOME 35 *)
@@ -248,7 +240,13 @@ struct
     in matrixToList(M.mul r key)
     end
 
-  fun decrypt key ciphertext = raise NotImplemented
+  fun decrypt key ciphertext =
+    let
+      val l = List.length key
+      val r = split l ciphertext
+      val keyInverse = (M.inv key)
+    in if isSome keyInverse then SOME (matrixToList(M.mul r (valOf(keyInverse)))) else NONE
+    end 
   fun knownPlaintextAttack keyLenght plaintext ciphertext = raise NotImplemented
 end;
 
@@ -365,35 +363,31 @@ local
   val dictionary = List.foldl (fn (w, d) => Trie.insert w d) Trie.empty (List.map String.explode (parseWords "hamlet.txt")) handle NotImplemented => Trie.empty
 in
 
-  (* val _ : H.Cipher.t list list -> string -> string = H.encrypt;
-val test1 = H.encrypt [[2,3,4],[2,1,5],[14,5,11]] "hill cipher is simple" = "mltlx  bosfbbswvwurdq" handle NotImplemented => false;
-val test2 = H.encrypt [[2,3,4],[2,1,5],[14,5,11]] "hill cipher is simple a" = "mltlx  bosfbbswvwurdq" handle NotImplemented => false;
-val test3 = H.encrypt [[2,3],[8,22]] "hill cipher is simple but not secure" = "gflcxlkabzi hmqmnptojojimfmumfxellvb" handle NotImplemented => false;
-val _ = (all_tests := !all_tests @ [test1, test2, test3]); *)
-(*split (List.length ([[2,3,4],[2,1,5],[14,5,11]])) (H.encode("hill cipher is simple"));
-val kosi = [[8,9,12],[12,0,3],[9,16,8],[5,18,0],[9,19,0],[19,9,13],[16,12,5]]
- M.mul key (M.tr([hd (kosi)]));
- val it = [[13],[7],[3]]
-
-
- structure H = HillCipher(val alphabet = " abcdefghijklmnopqrstuvwxyz");
- structure Matrix = Mat (Ring (val n = 26));
- Matrix.mul key (Matrix.tr([hd(kosi)]))
-*)
-
   fun encrypt key plaintext =
     let
       val kosi = split (List.length(key)) (encode(plaintext))
       fun helper kosi = 
         case kosi of 
           [] => []
-          | x::xs => (Matrix.mul key (Matrix.tr([x]))) @ (helper xs)
+          | x::xs => (Matrix.mul [x] key) @ (helper xs)
       val sifrirano = helper kosi 
     in decode (List.concat sifrirano)
     end
 
 
-  fun decrypt key ciphertext = raise NotImplemented
+  fun decrypt key ciphertext = let
+      val kosi = split (List.length(key)) (encode(ciphertext))
+      val keyInverse = Matrix.inv key
+      fun helper kosi = 
+        case kosi of 
+          [] => []
+          | x::xs => (Matrix.mul [x] (valOf(keyInverse))) 
+          @ (helper xs)
+    in if isSome (keyInverse) 
+       then SOME (decode (List.concat (helper kosi))) 
+       else NONE
+    end
+
   fun knownPlaintextAttack keyLenght plaintext ciphertext = raise NotImplemented
   fun ciphertextOnlyAttack keyLenght ciphertext = raise NotImplemented
   end
