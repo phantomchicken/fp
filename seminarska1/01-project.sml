@@ -209,9 +209,12 @@ struct
         (* | NONE => NONE pivot
         | _ => SOME pivot *)
 
-  fun inv m = let 
+  fun inv m = let  
                 val i = gauss ([], join m (id (List.length m))); 
-              in if i=[] then NONE else SOME i 
+              in 
+                 if not (i=[]) andalso not (null i) andalso not (null (hd i)) andalso (List.length i) = (List.length (hd i))
+                 then SOME i 
+                 else NONE 
               end
 
   (* fun inv m = 
@@ -268,8 +271,47 @@ struct
       val r = split l ciphertext
       val keyInverse = (M.inv key)
     in if isSome keyInverse then SOME (matrixToList(M.mul r (valOf(keyInverse)))) else NONE
+    end
+
+(*
+structure C = HillCipherAnalyzer (Mat (Ring (val n = 10)));
+  val test1 = C.knownPlaintextAttack 2 [1,2,3] [1,2,3] = NONE handle NotImplemented => false;
+val test2 = C.knownPlaintextAttack 2 [1,2,3,5] [1,2,3,5] = SOME [[1,0],[0,1]] handle NotImplemented => false;
+  val test3 = C.knownPlaintextAttack 1 [1,2,3] [3,6,9] = SOME [[3]] handle NotImplemented => false;
+  val test4 = C.knownPlaintextAttack 1 [1,2,3] [2,4,8] = NONE handle NotImplemented => false;
+  val test5 = let val r = C.knownPlaintextAttack 1 [1,2,3] [5,0,5] in r = SOME [[5]] orelse r = NONE end (* NONE is also fine *) handle NotImplemented => false;
+val test6 = C.knownPlaintextAttack 1 [2,4,5] [4,8,0] = NONE handle NotImplemented => false;
+val test7 = C.knownPlaintextAttack 3 [] [] = NONE (* solution is not unique *) handle NotImplemented => false;
+val test8 = C.knownPlaintextAttack 3 [1,2,3,4,5,6,7,8,9] [1,6,3,4,5,6,7,4,9] = NONE handle NotImplemented => false;
+val test9 = C.knownPlaintextAttack 3 [1,2,3,4,5,6,7,8,9,1,1,1] [1,6,3,4,5,6,7,4,9,1,3,1] = NONE handle NotImplemented => false;
+  val test10 = C.knownPlaintextAttack 3 [1,2,3,4,5,6,7,8,9,1,1,1,1,0,0] [1,6,3,4,5,6,7,4,9,1,3,1,1,0,0] = SOME [[1,0,0],[0,3,0],[0,0,1]] handle NotImplemented => false;*)
+
+
+  (* fun knownPlaintextAttack keyLength plaintext ciphertext =   
+  let
+    val x = split keyLength plaintext
+    val y = split keyLength ciphertext
+    val xInv = M.inv x
+  in if isSome xInv then SOME (M.mul (valOf(xInv)) y) else NONE 
+  end *)
+  fun knownPlaintextAttack keyLength plaintext ciphertext =   
+    let
+      val x = split keyLength plaintext
+      val y = split keyLength ciphertext
+      fun plainTextHelper xBlok yBlok =
+        case (xBlok,yBlok) of
+          (x::xs,y::ys) => if isSome (M.inv [x]) 
+                          then  SOME (M.mul (valOf(M.inv [x])) [y]) 
+                          else plainTextHelper xs ys
+          | (_,_) => NONE
+      val k = plainTextHelper x y
+    in if isSome k andalso ( (matrixToList (List.map (fn(el)=> M.mul [el] (valOf (k))  ) x)) = y )
+       then k else NONE
     end 
-  fun knownPlaintextAttack keyLenght plaintext ciphertext = raise NotImplemented
+    
+     (*List.map (fn(el)=> M.mul [el] (valOf (k)) ) x;*)
+   
+  
 end;
 
 
@@ -287,23 +329,23 @@ struct
 
   val empty = [] : ''a dict
 
- fun makeDict w = 
-    case w of 
+  fun makeDict w = 
+  case w of 
         [w] => [N(w, true, [])]
         | w::ws => [N(w, false, makeDict ws)]       
 
-    fun insert word dict = 
-    case (word,dict) of 
-          ([w], N(crka, jeKonec, rep)::rep2) => if w=crka then N(crka, true, rep)::rep2 else N(crka, false, rep)::rep2
-          | (w::ws, []) => makeDict (w::ws)
-          | (w::ws, N(crka, jeKonec, rep)::rep2) => if w = crka then [N(crka, jeKonec, (insert ws rep))] @ rep2 else [N(crka, jeKonec, rep)] @ (insert word rep2)
+  fun insert word dict = 
+  case (word,dict) of 
+        ([w], N(crka, jeKonec, rep)::rep2) => if w=crka then N(crka, true, rep)::rep2 else N(crka, false, rep)::rep2
+        | (w::ws, []) => makeDict (w::ws)
+        | (w::ws, N(crka, jeKonec, rep)::rep2) => if w = crka then [N(crka, jeKonec, (insert ws rep))] @ rep2 else [N(crka, jeKonec, rep)] @ (insert word rep2)
 
-    fun lookup w dict =
-    case (w,dict) of 
-        (w::[], N(crka, jeKonec, rep)::rep2) => if w = crka andalso jeKonec then true else false
-        | (w::ws, N(crka, jeKonec, rep)::rep2) => if w = crka then lookup ws rep orelse lookup ws rep2 else lookup (w::ws) rep2
-        | (w::ws, []) => false
-        | ([], _) => false
+  fun lookup w dict =
+  case (w,dict) of 
+      (w::[], N(crka, jeKonec, rep)::rep2) => if w = crka andalso jeKonec then true else false
+      | (w::ws, N(crka, jeKonec, rep)::rep2) => if w = crka then lookup ws rep orelse lookup ws rep2 else lookup (w::ws) rep2
+      | (w::ws, []) => false
+      | ([], _) => false
 
 end;
 
@@ -410,7 +452,7 @@ in
        else NONE
     end
 
-  fun knownPlaintextAttack keyLenght plaintext ciphertext = raise NotImplemented
-  fun ciphertextOnlyAttack keyLenght ciphertext = raise NotImplemented
+  fun knownPlaintextAttack keyLength plaintext ciphertext = raise NotImplemented
+  fun ciphertextOnlyAttack keyLength ciphertext = raise NotImplemented
   end
 end;
