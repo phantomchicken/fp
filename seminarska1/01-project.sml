@@ -17,8 +17,12 @@ exception NotImplemented;
 fun split _ [] = [] 
 | split blockSize xs =
     if blockSize > length xs 
-    then split 1 [] 
-    else List.take (xs, blockSize) :: split blockSize (List.drop(xs,blockSize))
+    then [] 
+    else 
+      let
+        val tmp = List.splitAt(xs,blockSize)
+      in (#1 (tmp)) :: (split blockSize (#2 tmp))
+      end
 
 signature RING =
 sig
@@ -129,7 +133,9 @@ struct
 
     end
 
-  fun tr (matrix) =
+  fun tr [[]] = [[]]
+  | tr [] = []
+  | tr (matrix) =
     List.tabulate (List.length (List.nth (matrix, 0)), fn i => List.map (fn j => List.nth (j, i)) matrix);
 
   fun dot v1 v2 = foldl (fn (x,y) => R.+(x,y)) R.zero (ListPair.map(fn(x,y)=> R.*(x,y)) (v1,v2));
