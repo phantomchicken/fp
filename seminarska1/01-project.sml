@@ -273,20 +273,6 @@ struct
     in if isSome keyInverse then SOME (matrixToList(M.mul r (valOf(keyInverse)))) else NONE
     end
 
-(*
-structure C = HillCipherAnalyzer (Mat (Ring (val n = 10)));
-  val test1 = C.knownPlaintextAttack 2 [1,2,3] [1,2,3] = NONE handle NotImplemented => false;
-val test2 = C.knownPlaintextAttack 2 [1,2,3,5] [1,2,3,5] = SOME [[1,0],[0,1]] handle NotImplemented => false;
-  val test3 = C.knownPlaintextAttack 1 [1,2,3] [3,6,9] = SOME [[3]] handle NotImplemented => false;
-  val test4 = C.knownPlaintextAttack 1 [1,2,3] [2,4,8] = NONE handle NotImplemented => false;
-  val test5 = let val r = C.knownPlaintextAttack 1 [1,2,3] [5,0,5] in r = SOME [[5]] orelse r = NONE end (* NONE is also fine *) handle NotImplemented => false;
-val test6 = C.knownPlaintextAttack 1 [2,4,5] [4,8,0] = NONE handle NotImplemented => false;
-val test7 = C.knownPlaintextAttack 3 [] [] = NONE (* solution is not unique *) handle NotImplemented => false;
-val test8 = C.knownPlaintextAttack 3 [1,2,3,4,5,6,7,8,9] [1,6,3,4,5,6,7,4,9] = NONE handle NotImplemented => false;
-val test9 = C.knownPlaintextAttack 3 [1,2,3,4,5,6,7,8,9,1,1,1] [1,6,3,4,5,6,7,4,9,1,3,1] = NONE handle NotImplemented => false;
-  val test10 = C.knownPlaintextAttack 3 [1,2,3,4,5,6,7,8,9,1,1,1,1,0,0] [1,6,3,4,5,6,7,4,9,1,3,1,1,0,0] = SOME [[1,0,0],[0,3,0],[0,0,1]] handle NotImplemented => false;*)
-
-
   (* fun knownPlaintextAttack keyLength plaintext ciphertext =   
   let
     val x = split keyLength plaintext
@@ -298,13 +284,13 @@ val test9 = C.knownPlaintextAttack 3 [1,2,3,4,5,6,7,8,9,1,1,1] [1,6,3,4,5,6,7,4,
     let
       val x = split keyLength plaintext
       val y = split keyLength ciphertext
-      fun plainTextHelper xBlok yBlok =
+      fun plainTextHelper xBlok yBlok keyLength =
         case (xBlok,yBlok) of
-          (x::xs,y::ys) => if isSome (M.inv [x]) 
-                          then  SOME (M.mul (valOf(M.inv [x])) [y]) 
-                          else plainTextHelper xs ys
+          (x::xs,y::ys) => if (List.length xBlok >= keyLength) andalso (List.length yBlok >= keyLength) andalso isSome (M.inv (List.take (xBlok, keyLength))) 
+                          then  SOME (M.mul (valOf(M.inv (List.take (xBlok, keyLength)))) (List.take (yBlok, keyLength))) 
+                          else plainTextHelper xs ys keyLength
           | (_,_) => NONE
-      val k = plainTextHelper x y
+      val k = plainTextHelper x y keyLength
     in if isSome k andalso ( (matrixToList (List.map (fn(el)=> M.mul [el] (valOf (k))  ) x)) = y )
        then k else NONE
     end 
@@ -452,7 +438,7 @@ in
        else NONE
     end
 
-  fun knownPlaintextAttack keyLength plaintext ciphertext = raise NotImplemented
+  fun knownPlaintextAttack keyLength plaintext ciphertext = Cipher.knownPlaintextAttack keyLength (encode plaintext) (encode ciphertext)
   fun ciphertextOnlyAttack keyLength ciphertext = raise NotImplemented
   end
 end;
