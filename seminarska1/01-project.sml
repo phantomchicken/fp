@@ -21,7 +21,7 @@ fun split _ [] = []
     else 
       let
         val tmp = List.splitAt(xs,blockSize)
-      in (#1 (tmp)) :: (split blockSize (#2 tmp))
+      in [#1 (tmp)] @ (split blockSize (#2 tmp))
       end
 
 signature RING =
@@ -189,13 +189,13 @@ struct
     in idN
     end
 
-  (* fun reduce v m = 
+  fun reduce v m = 
     map (fn x :: xs =>(Vec.sub xs o Vec.scale x) v ) m
   
   fun pivot ((v as x::xs) :: m) = 
     (case R.inv x of 
       SOME x' => SOME (Vec.scale x' v :: m) 
-      | NONE => case pivot m of 
+      | NONE => case pivot m of
                   SOME (v' :: m') => SOME (v' :: v :: m')
                   | _ => NONE)
       | pivot _ = NONE
@@ -204,13 +204,17 @@ struct
     | gauss (above, curr) =
       case pivot curr of
         SOME ((_::v)::m) => gauss (reduce v above @ [v], reduce v m) (*reducitamo above z v-jem*)
+        | NONE => []
+        | _ => valOf(pivot curr)
         (* | NONE => NONE pivot
-        | _ => SOME pivot *) *)
+        | _ => SOME pivot *)
 
-(*val det = R.+ ((R.*(a,d), R.neg(R.*(b,c))) *)
+  fun inv m = let 
+                val i = gauss ([], join m (id (List.length m))); 
+              in if i=[] then NONE else SOME i 
+              end
 
-  
-  fun inv m = 
+  (* fun inv m = 
     case List.length m of
       1 => if isSome (R.inv (hd(hd m))) then SOME [[valOf(R.inv (hd(hd m)))]] else NONE
       | 2 => (case m of 
@@ -220,7 +224,7 @@ struct
                                 in (if isSome(detInv) then SOME [[R.*(valOf(detInv),d),R.*(valOf(detInv),R.neg(b))],[R.*(valOf(detInv),R.neg(c)),R.*(valOf(detInv),a)]] else NONE)  
                                 end) 
               | _ => NONE)
-      | _ => NONE 
+      | _ => NONE  *)
 end;
 
 
@@ -269,13 +273,13 @@ struct
 end;
 
 
-structure Trie (*:> 
+structure Trie :> 
 sig
 eqtype ''a dict
 val empty : ''a dict
 val insert : ''a list -> ''a dict -> ''a dict
 val lookup : ''a list -> ''a dict -> bool
-end*)
+end
 =
 struct
   datatype ''a tree = N of ''a * bool * ''a tree list
