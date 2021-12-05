@@ -16,12 +16,12 @@ exception NotImplemented;
 
 fun split _ [] = [] 
 | split blockSize xs =
-    if blockSize > length xs 
-    then [] 
-    else 
       let
-        val tmp = List.splitAt(xs,blockSize)
-      in [#1 (tmp)] @ (split blockSize (#2 tmp))
+        val tmp = List.splitAt(xs,blockSize) handle Subscript => ([],[])
+      in 
+        case tmp of 
+        	([],[]) => [] 
+          | (_,_) => #1 (tmp) :: (split blockSize (#2 tmp))
       end
 
 signature RING =
@@ -60,24 +60,7 @@ struct
   fun modularInverse (a, n) =  if ((modularInverseBrute (n,a)) = ~1) 
                                then NONE 
                                else SOME (modularInverseBrute (n,a));
-
-
- (* val test3 = Z96.inv 11 = SOME 35 *)
- (* a inv n = reš
- reš * n mod a = 1 *)
- (* 11 * 35 mod 96 = 1 *)
-  (* fun foo (n, a) =
-    let
-    val counter = ref a
-    in
-    while !i > 0 do (
-        if (n * i mod a) 
-        then i 
-        else
-        i := !i - 1
-    )
-    end; *)
-
+                               
   fun inv x = modularInverse (x mod n, n)
   fun op + a =  Int.+ a mod n
   fun op * p =  Int.* p mod n
@@ -141,37 +124,31 @@ struct
   fun dot v1 v2 = foldl (fn (x,y) => R.+(x,y)) R.zero (ListPair.map(fn(x,y)=> R.*(x,y)) (v1,v2));
 
   fun mul matrix1 matrix2 =
-  case matrix1 of 
-      [] => []
-      |    x::xr => [List.map (fn y => dot x y) (tr matrix2)] @ (mul xr matrix2);  
+    case matrix1 of 
+        [] => []
+        |    x::xr => [List.map (fn y => dot x y) (tr matrix2)] @ (mul xr matrix2);  
 
+  fun id n = 
+    let
+      fun zeroRow 0 = nil
+      | zeroRow n = (R.zero)::(zeroRow (n-1))  
   
-  fun zeroRow 0 = nil
-  | zeroRow n = (R.zero)::(zeroRow (n-1))  
-  
-  (* fun zeroMatrix n = List.tabulate(n, fn (x) => zeroRow n);   *)
-  
-  fun replaceZeroAtIndex (i, ix, []) = []
-  | replaceZeroAtIndex (i, ix, x::xs) = (if i = ix then R.one else R.zero) :: (replaceZeroAtIndex (i+1, ix, xs))   
-  
-  (* - (zeroRow 0)@(replaceZeroAtIndex (1,1,zeroRow 3));;
-  val it = [1,0,0] : int list
-  - (zeroRow 1)@(replaceZeroAtIndex (1,1,zeroRow 2));;
-  val it = [0,1,0] : int list
-  - (zeroRow 2)@(replaceZeroAtIndex (1,1,zeroRow 1));;
-  val it = [0,0,1] : int list *)  
-  
-  fun idHelper (_,0) = [] 
-  | idHelper (i, n) = 
-    let 
-        val prefix = zeroRow i
-        val suffix = replaceZeroAtIndex (1,1,zeroRow n)
-        val row = (prefix) @ (suffix)
-    in
-        (row)::(idHelper(i+1,n-1)) 
-    end;
+      fun replaceZeroAtIndex (i, ix, []) = []
+      | replaceZeroAtIndex (i, ix, x::xs) = (if i = ix then R.one else R.zero) :: (replaceZeroAtIndex (i+1, ix, xs))
 
-  fun id n =  idHelper (0,n);
+      fun idHelper (_,0) = [] 
+      | idHelper (i, n) = 
+        let 
+            val prefix = zeroRow i
+            val suffix = replaceZeroAtIndex (1,1,zeroRow n)
+            val row = (prefix) @ (suffix)
+        in
+            (row)::(idHelper(i+1,n-1)) 
+        end;
+
+    in idHelper (0,n)
+    end
+   
 
   fun join [] [] = []
   | join xs [] = xs
@@ -181,13 +158,6 @@ struct
                  in glava::rep
                  end;
 
-
-  fun appendIdentityToMatrix m =
-    let 
-      val n = List.length m
-      val idN = id n
-    in idN
-    end
 
   fun reduce v m = 
     map (fn x :: xs =>(Vec.sub xs o Vec.scale x) v ) m
@@ -217,17 +187,6 @@ struct
                  else NONE 
               end
 
-  (* fun inv m = 
-    case List.length m of
-      1 => if isSome (R.inv (hd(hd m))) then SOME [[valOf(R.inv (hd(hd m)))]] else NONE
-      | 2 => (case m of 
-              [[a,b],[c,d]] => (let 
-                                  val det = R.+ ((R.*(a,d), R.neg(R.*(b,c))))
-                                  val detInv = R.inv(det) 
-                                in (if isSome(detInv) then SOME [[R.*(valOf(detInv),d),R.*(valOf(detInv),R.neg(b))],[R.*(valOf(detInv),R.neg(c)),R.*(valOf(detInv),a)]] else NONE)  
-                                end) 
-              | _ => NONE)
-      | _ => NONE  *)
 end;
 
 
@@ -247,13 +206,6 @@ functor HillCipherAnalyzer (M : MAT) :> CIPHER
 struct
   type t = M.t
   
-  (* - C.encrypt [[1,0,0],[0,3,0],[0,0,1]] [1,2,3,4,5,6,7,8];
-  val it = [1,6,3,4,5,6] : C.t list
-  K:l x l matrika
-  x: text
-  r: razkosaj x po l [1,2,3],[4,5,6],[7,8] = [1,2,3],[4,5,6]
-  mnozenje matrik  r * k = [[1,6,3],[4,15,6]] *)
-
   fun matrixToList m = 
     case m of g::r => g @ matrixToList r
     | _ => []
@@ -273,13 +225,6 @@ struct
     in if isSome keyInverse then SOME (matrixToList(M.mul r (valOf(keyInverse)))) else NONE
     end
 
-  (* fun knownPlaintextAttack keyLength plaintext ciphertext =   
-  let
-    val x = split keyLength plaintext
-    val y = split keyLength ciphertext
-    val xInv = M.inv x
-  in if isSome xInv then SOME (M.mul (valOf(xInv)) y) else NONE 
-  end *)
   fun knownPlaintextAttack keyLength plaintext ciphertext =   
     let
       val x = split keyLength plaintext
@@ -294,10 +239,7 @@ struct
     in if isSome k andalso ( (matrixToList (List.map (fn(el)=> M.mul [el] (valOf (k))  ) x)) = y )
        then k else NONE
     end 
-    
-     (*List.map (fn(el)=> M.mul [el] (valOf (k)) ) x;*)
-   
-  
+      
 end;
 
 
@@ -371,14 +313,14 @@ structure Ring = Ring (val n = alphabetSize)
 structure Matrix = Mat (Ring)
 structure Cipher = HillCipherAnalyzer (Matrix)
 
-fun najdiIxCrke (alphabet, crka, i) =
-  case alphabet of
-    [] => ~1
-    | x::xs => if x=crka then i else najdiIxCrke (xs, crka, i+1)
 
 fun encode txt =
   let 
-    val txtChar = String.explode (txt) 
+    val txtChar = String.explode (txt)
+    fun najdiIxCrke (alphabet, crka, i) =
+      case alphabet of
+        [] => ~1
+        | x::xs => if x=crka then i else najdiIxCrke (xs, crka, i+1) 
   in 
     case txtChar of 
       [] => []
