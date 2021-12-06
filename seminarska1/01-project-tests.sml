@@ -171,7 +171,7 @@ val test4 = C.decrypt [[1,3],[3,7]] [3,6,9,2,5] = NONE handle NotImplemented => 
 val test5 = C.decrypt [[1,3],[2,6]] [] = NONE handle NotImplemented => false;
 val _ = (all_tests := !all_tests @ [test1, test2, test3, test4, test5]);
 
-val _ = print "---------- decrypt ----------\n";
+val _ = print "---------- knownPlaintextAttack ----------\n";
 val _ : int -> C.t list -> C.t list -> C.t list list option = C.knownPlaintextAttack
 val test1 = C.knownPlaintextAttack 2 [1,2,3] [1,2,3] = NONE handle NotImplemented => false;
 val test2 = C.knownPlaintextAttack 2 [1,2,3,5] [1,2,3,5] = SOME [[1,0],[0,1]] handle NotImplemented => false;
