@@ -1,0 +1,190 @@
+#lang racket
+
+
+; ***************************************************************
+; ******************* 1. PARI IN SEZNAMI ************************
+; ***************************************************************
+
+(define p1 (cons "a" 1))
+(define p2 (cons "a" (cons 2 (cons #f 3.14))))
+(define l1 (cons "a" (cons 2 (cons #f null))))
+(define l2 (cons "a" (cons 2 (cons #f (cons 3.14 null)))))
+(define sez (list "a" 2 #f 3.14))
+;
+#|
+> (car sez)
+"a"
+> (cdr sez)
+'(2 #f 3.14)
+> (car (cdr (cdr sez)))
+#f
+> (car (cdr (cdr (cdr l3))))
+3.14
+> (null? (cdr (cdr (cdr (cdr l3)))))
+|#
+
+
+
+; ******************** FUNKCIJE NAD SEZNAMI *********************
+
+; vsota seznama
+(define (vsota_sez sez)
+  (if (null? sez)
+      0
+      (+ (car sez) (vsota_sez (cdr sez)))))
+
+; filter
+(define (mojfilter f sez)
+  (if (null? sez)
+      null
+      (if (f (car sez))
+          (cons (car sez) (mojfilter f (cdr sez)))
+          (mojfilter f (cdr sez)))))
+
+; vgnezdeno štetje
+(define a (list 1 2 5 "a"))
+(define b (list (list 1 2 (list #f) "lala") (list 1 2 3) 5))
+
+; vgnezdeno štetje - s stavkom IF
+(define (prestej sez)
+  (if (null? sez)
+      0
+      (if (list? (car sez))
+          (+ (prestej (car sez)) (prestej (cdr sez)))
+          (+ 1 (prestej (cdr sez))))))
+; vgnezdeno štetje - s stavkom COND
+(define (prestej1 sez)
+  (cond [(null? sez) 0]
+        [(list? (car sez)) (+ (prestej (car sez)) (prestej (cdr sez)))]
+        [#t (+ 1 (prestej (cdr sez)))]))
+
+
+
+
+; ***************************************************************
+; ******************** 2. LOKALNO OKOLJE ************************
+; ***************************************************************
+
+#|
+let  ; izrazi se evalvirajo v okolju PRED izrazom let
+let* ; izrazi se evalvirajo kot rezultat predhodnih deklaracij (tako dela SML)
+letrec ; izrazi se evalvirajo v okolju, ki vključuje vse podane deklaracije
+define ; semantika ekvivalentna kot pri letrec, drugačna sintaksa
+|#
+
+; delovanje let
+(define (test-let a)
+  (let ([a 3]
+        [b (+ a 2)])
+    (+ a b)))    
+; > (test-let 10)
+; 3 + (10+2) = 15
+
+
+; delovanje let*
+(define (test-let* a)
+  (let* ([a 3]
+         [b (+ a 2)])
+    (+ a b)))    
+; > (test-let* 10)
+; 3 + (3+2) = 8
+
+
+; delovanje letrec
+(define (test-letrec a)
+  (letrec ([b 3]
+           [c (lambda (x) (+ a b d x))]
+           [d (+ a 1)])
+    (c a)))    
+; > (test-letrec 50)
+; 154   ; a=50, b=3, c=..., d= 51
+; (c 50) = 50 + 3 + 51 + 50 = 154
+
+
+; nedelovanje: deklaracije se izvajajo zaporedno
+(define (test-letrec2 a)
+  (letrec ([b 3]
+           [c (+ d 1)]
+           [d (+ a 1)])
+    (+ a d)))    
+; d: undefined;
+; cannot use before initialization
+
+
+; delovanje define (enakovredno letrec)
+(define (test-define a)
+  (define b 3)
+  (define c (lambda (x) (+ a b d x)))
+  (define d (+ a 1))
+  (c a))   
+; > (test-define 50)
+; 154
+
+; ***************************************************************
+; ***************** 3. ZAKASNITVENE FUNKCIJE ********************
+; ***************************************************************
+
+#|
+(define (potenca x n)
+  (if (= n 0) 
+      1
+      (* x (potenca x (- n 1)))))
+|#
+
+; primer, ki ne deluje - neskoncna rekurzija
+(define (moj-if pogoj res nires)
+  (if pogoj res nires))
+
+(define (potenca-moj x n)
+  (moj-if (= n 0) 
+          1
+          (* x (potenca-moj x (- n 1)))))
+
+
+; uporaba zakasnjene evalvacije - thunking
+(define (moj-if-super pogoj res nires)
+  (if pogoj (res) (nires)))
+
+(define (potenca-super x n)
+  (moj-if-super (= n 0) 
+          (lambda () 1)
+          (lambda () (* x (potenca-super x (- n 1))))))
+
+
+
+
+; ***************************************************************
+; ******************** 4. ZAKASNJENA EVALVACIJA *****************
+; ***************************************************************
+
+; funkcija za testiranje - vrne število x z zakasnitvijo (simulacija dolgega izračuna)
+(define (dolga_operacija x)
+  (begin
+    (printf "Dolga operacija~n")
+    (sleep 1)    ; počaka 1 sekundo
+    x))
+
+
+; ***************************************************************
+; 1. PRIMER: osnovna verzija potence, eksponent zakasnjen *******
+
+; izračuna x^n; n dobimo zakasnjeno (thunk) s klicem (klic_n)
+(define (potenca x klic_n)
+  (cond [(= x 0) 0]
+        [(= x 1) 1]
+        [(= (klic_n) 1) x]
+        [#t (* x (potenca x (lambda () (- (klic_n) 1))))]))
+
+; (potenca 0 (lambda () (dolga_operacija 2)))    ; 0x evalvacija eksponenta  :)
+; (potenca 1 (lambda () (dolga_operacija 20)))   ; 0x evalvacija eksponenta  :)
+; (potenca 200 (lambda () (dolga_operacija 1)))  ; 1x evalvacija eksponenta  :|
+; (potenca 2 (lambda () (dolga_operacija 4)))    ; 4x evalvacija eksponenta  :(
+
+
+; ***************************************************************
+; 2. PRIMER: uporabimo lokalno spremenljivko za eksponent *******
+
+;(potenca 0 (let ([rez (dolga_operacija 2)]) (lambda () rez)))   ; 1x evalvacija eksponenta  :(
+;(potenca 1 (let ([rez (dolga_operacija 2)]) (lambda () rez)))   ; 1x evalvacija eksponenta  :(
+;(potenca 200 (let ([rez (dolga_operacija 1)]) (lambda () rez))) ; 1x evalvacija eksponenta  :|
+;(potenca 2 (let ([rez (dolga_operacija 4)]) (lambda () rez)))   ; 1x evalvacija eksponenta  :)
