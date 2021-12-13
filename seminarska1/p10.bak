@@ -1,0 +1,7 @@
+#lang racket
+(define-syntax moj-if          ; ime makra
+    (syntax-rules (then-else)  ; druge ključne besede
+    [(moj-if e1 then e2 else e3) ; sintaksa makra
+    (if e1 e2 e3)]))             ; kaj naredi makro
+
+(define x (moj-if #t then 3.14 else 42))
