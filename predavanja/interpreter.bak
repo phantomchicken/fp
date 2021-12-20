@@ -1,0 +1,2 @@
+#lang racket
+(define avto (tip barva) #:transparent)
