@@ -1,0 +1,6 @@
+#lang racket
+
+;tok (11 . #procedure)
+(define (maptok f tok) ;let* kot v smlu
+  (let ([prvi (tok)])    
+  ))

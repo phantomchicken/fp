@@ -1,10 +1,15 @@
 #lang racket
 (provide (all-defined-out))
 
-(struct int (stevilo) #:transparent) ; konstanta, arg je celo stevilo
+  (struct int (n) #:transparent) ; konstanta, arg je celo n
+   (struct empty () #:transparent)
 (struct ?int (e) #:transparent)
-(struct true () #:transparent)
-(struct false () #:transparent)
+  (struct true () #:transparent)
+  (struct false () #:transparent)
+  (struct .. (e1 e2) #:transparent)
+(struct exception (exn) #:transparent)
+(struct trigger (e) #:transparent)
+
 (struct add (e1 e2) #:transparent)
 (struct mul (e1 e2) #:transparent)
 (struct ?leq (e1 e2) #:transparent)
@@ -12,9 +17,9 @@
 (struct if-then-else (condition e1 e2) #:transparent)
 
 
-(define-syntax ?geq
+(define-syntax geq?
   (syntax-rules ()
-  [(?geq e1 e2)
+  [(geq? e1 e2)
   (?leq e2 e1)]))
 
 (define-syntax ifte
@@ -26,26 +31,29 @@
   (cond [(int? e) e] ; vrnemo izraz v ciljnem jeziku
         [(true? e) e]
         [(false? e) e]
+        #|[(exception? e)
+         (let ([v (fri (exception-exn e))])
+         (if (string? exn) (error e) "error ni string")] |#
         [(?int? e) (let ([v (fri (?int-e e))]) (if (?int v) (true) (false)))]
         [(~? e)
          (let ([v (fri (~-e e))])
-           (cond [(int? v) (int (- (int-stevilo v)))]
+           (cond [(int? v) (int (- (int-n v)))]
                  [(true? v) (false)]
                  [(false? v) (true)]
                  [#t (error "negacija nepričakovanega izraza")]))]
         [(add? e)
          (let ([v1 (fri (add-e1 e))]
                [v2 (fri (add-e2 e))])
-           (cond [(and (int? v1) (int? v2)) (int (+ (int-stevilo v1) (int-stevilo v2))) ]
+           (cond [(and (int? v1) (int? v2)) (int (+ (int-n v1) (int-n v2))) ]
                  [(and (true? v1) (true? v2)) (false) ]
                  [(and (true? v1) (false? v2)) (true) ]
                  [(and (false? v1) (true? v2)) (true) ]
                  [(and (false? v1) (false? v2)) (false) ]
-                 [#t (error "seštevanje nepričakovanega izraza")]))]
+                 [#t (error "add: wrong argument type")]))]
         [(mul? e)
          (let ([v1 (fri (mul-e1 e))]
                [v2 (fri (mul-e2 e))])
-           (cond [(and (int? v1) (int? v2)) (int (* (int-stevilo v1) (int-stevilo v2))) ]
+           (cond [(and (int? v1) (int? v2)) (int (* (int-n v1) (int-n v2))) ]
                  [(and (true? v1) (true? v2)) (true) ]
                  [(and (true? v1) (false? v2)) (false) ]
                  [(and (false? v1) (true? v2)) (false) ]
@@ -54,7 +62,7 @@
         [(?leq? e)
          (let ([v1 (fri (?leq-e1 e))]
                [v2 (fri (?leq-e2 e))])
-           (cond [(and (int? v1) (int? v2)) (if (<= (int-stevilo v1) (int-stevilo v2)) (true) (false)) ]
+           (cond [(and (int? v1) (int? v2)) (if (<= (int-n v1) (int-n v2)) (true) (false)) ]
                  [(and (true? v1) (true? v2)) (true) ]
                  [(and (true? v1) (false? v2)) (false) ]
                  [(and (false? v1) (true? v2)) (true) ]
@@ -66,5 +74,8 @@
            (cond [true? v-test] (fri (if-then-else-e1 e))
                  [false? v-test] (fri (if-then-else-e2 e))
                  [#t (error "pogoj ni logična vrednost")]))]
-          
+        [(..? e)
+         (let ([v1 (fri (..-e1 e))]
+               [v2 (fri (..-e2 e))]) (.. v1 v2)) 
+         ]
         [#t (error "sintaksa izraza ni pravilna")]))

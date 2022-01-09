@@ -19,27 +19,29 @@
 (define (first n tok)
   (if (> n 1) 
       (begin
-        (displayln (car tok))
+        ( car tok)
         (first (- n 1) ((cdr tok))))
-      (displayln (car tok))))
+      ( car tok)))
 
 ;5 (first 5 (squares fibs))
 (define (squares tok)
-  (letrec
-      ([f (lambda (e)
-            (cons (* (car e) (car e)) ;first ni mozen ker funkcija 4 ga zasenci
-                  (lambda () (f ((cdr e))))))])
-    (f tok)))
+            (cons (* (car tok) (car tok)) ;first ni mozen ker funkcija 4 ga zasenci
+                  (lambda () (squares ((cdr tok))))))
+
+
+
 
 ;6 (sml nil) (sml null (sml nil)) (sml hd (sml 5 :: null)) (sml tl (sml 5 :: (sml 4 :: (sml nil))))
 (define-syntax sml
-  (syntax-rules ()
-    [(sml nil) '()]
-    [(sml null e) (null? e)]
-    [(sml e1 :: e2) (cons e1 e2) ]
-    [(sml hd e) (first e)]
-    [(sml tl e) (rest e)]
-    ))
+  (syntax-rules
+    (nil null :: hd tl)
+    ((sml nil) (list))
+    ((sml null xs) (null? xs))
+    ((sml head :: tail) (cons head tail))
+    ((sml hd xs) (car xs) )
+    ((sml tl xs) (cdr xs) )
+   )
+)
 
 ;7 (define f (my-delay (lambda () (begin (write "bla") 123)))) (my-force f)
 (define (my-delay thunk)
@@ -56,5 +58,8 @@
 
 ;8 (partitions 3 7)
 (define (partitions k n)
-  n
+  (cond [(and (zero? k) (zero? n)) 1]
+        [(or (< k 1) (< n 1)) 0]
+        [else (+ (partitions (sub1 k) (sub1 n)) (partitions k (- n k)))]
   )
+)
